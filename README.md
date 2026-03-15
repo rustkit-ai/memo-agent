@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner.svg" alt="memo — Persistent memory for AI coding agents" width="100%"/>
+</p>
+
 # memo — Persistent memory for AI coding agents
 
 [![CI](https://github.com/rustkit-ai/memo/actions/workflows/ci.yml/badge.svg)](https://github.com/rustkit-ai/memo/actions/workflows/ci.yml)
