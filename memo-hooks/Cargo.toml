@@ -7,7 +7,7 @@ license.workspace = true
 description = "CLAUDE.md injection hooks for memo, persistent memory for AI coding agents"
 
 [dependencies]
-memo-core = { path = "../memo-core", version = "0.1.2" }
+memo-core = { path = "../memo-core", version = "0.1.3" }
 anyhow = { workspace = true }
 chrono = { workspace = true }
 serde_json = { workspace = true }
