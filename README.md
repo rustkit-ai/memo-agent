@@ -100,11 +100,10 @@ You open Claude Code the next day. Claude reads `CLAUDE.md` automatically at sta
 - What areas of the codebase were touched
 
 ```
-You: j'ai fait quoi la dernière fois ?
+You: what did we do last time?
 
-Claude: D'après le memo — tu as implémenté le password reset avec un token
-        email, expiration 1h, et hash bcrypt. Il reste à ajouter le rate
-        limiting sur /reset.
+Claude: Based on memo — you implemented password reset with an email token,
+        1h expiry, and bcrypt hash. Still need to add rate limiting on /reset.
 ```
 
 No re-exploration. No repeated questions. Claude picks up exactly where it left off.
