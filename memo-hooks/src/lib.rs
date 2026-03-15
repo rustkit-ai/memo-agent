@@ -91,7 +91,7 @@ pub fn write_to_claude_md(block: &InjectBlock, project_dir: &Path) -> Result<()>
         let end = existing
             .find(section_end)
             .map(|i| i + section_end.len())
-            .unwrap_or(start);
+            .unwrap_or(existing.len());
         format!("{}{}{}", &existing[..start], memo_section, &existing[end..])
     } else {
         // Prepend

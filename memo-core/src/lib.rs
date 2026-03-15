@@ -19,7 +19,6 @@ pub struct Entry {
 pub struct Session {
     pub id: String,
     pub started_at: DateTime<Utc>,
-    pub ended_at: Option<DateTime<Utc>>,
     pub project_id: String,
 }
 
@@ -86,46 +85,64 @@ impl Store {
     }
 
     pub fn list(&self, limit: Option<usize>) -> Result<Vec<Entry>> {
-        let sql = match limit {
-            Some(n) => format!(
-                "SELECT id, timestamp, content, tags, project_id, session_id \
-                 FROM entries WHERE project_id = '{}' ORDER BY timestamp DESC LIMIT {}",
-                self.project_id, n
-            ),
-            None => format!(
-                "SELECT id, timestamp, content, tags, project_id, session_id \
-                 FROM entries WHERE project_id = '{}' ORDER BY timestamp DESC",
-                self.project_id
-            ),
-        };
+        self.query_entries(
+            "SELECT id, timestamp, content, tags, project_id, session_id \
+             FROM entries WHERE project_id = ?1 ORDER BY timestamp DESC",
+            &self.project_id,
+            limit,
+        )
+    }
 
-        let mut stmt = self.conn.prepare(&sql)?;
+    pub fn search(&self, query: &str) -> Result<Vec<Entry>> {
+        let pattern = format!("%{}%", query);
+        let mut stmt = self.conn.prepare(
+            "SELECT id, timestamp, content, tags, project_id, session_id \
+             FROM entries WHERE project_id = ?1 AND content LIKE ?2 ORDER BY timestamp DESC",
+        )?;
         let entries = stmt
-            .query_map([], |row| {
+            .query_map(params![self.project_id, pattern], |row| {
                 let tags_json: String = row.get(3)?;
                 let ts_str: String = row.get(1)?;
                 Ok((row.get(0)?, ts_str, row.get(2)?, tags_json, row.get(4)?, row.get(5)?))
             })?
-            .map(|r| {
-                let (id, ts_str, content, tags_json, project_id, session_id): (
-                    i64, String, String, String, String, String,
-                ) = r?;
-                let timestamp = DateTime::parse_from_rfc3339(&ts_str)
-                    .map(|dt| dt.with_timezone(&Utc))
-                    .unwrap_or_else(|_| Utc::now());
-                let tags: Vec<String> = serde_json::from_str(&tags_json).unwrap_or_default();
-                Ok(Entry {
-                    id,
-                    timestamp,
-                    content,
-                    tags,
-                    project_id,
-                    session_id,
-                })
-            })
+            .map(|r| row_tuple_to_entry(r?))
             .collect::<Result<Vec<_>>>()?;
-
         Ok(entries)
+    }
+
+    fn query_entries(
+        &self,
+        base_sql: &str,
+        project_id: &str,
+        limit: Option<usize>,
+    ) -> Result<Vec<Entry>> {
+        match limit {
+            Some(n) => {
+                let sql = format!("{} LIMIT ?2", base_sql);
+                let mut stmt = self.conn.prepare(&sql)?;
+                let entries = stmt
+                    .query_map(params![project_id, n as i64], |row| {
+                        let tags_json: String = row.get(3)?;
+                        let ts_str: String = row.get(1)?;
+                        Ok((row.get(0)?, ts_str, row.get(2)?, tags_json, row.get(4)?, row.get(5)?))
+                    })?
+                    .map(|r| row_tuple_to_entry(r?))
+                    .collect::<Result<Vec<_>>>()?;
+                Ok(entries)
+            }
+            None => {
+                let mut stmt = self.conn.prepare(base_sql)?;
+                let entries = stmt
+                    .query_map(params![project_id], |row| {
+                        let tags_json: String = row.get(3)?;
+                        let ts_str: String = row.get(1)?;
+                        Ok((row.get(0)?, ts_str, row.get(2)?, tags_json, row.get(4)?, row.get(5)?))
+                    })?
+                    .map(|r| row_tuple_to_entry(r?))
+                    .collect::<Result<Vec<_>>>()?;
+                Ok(entries)
+            }
+        }
     }
 
     pub fn clear(&self) -> Result<usize> {
@@ -168,6 +185,30 @@ impl Store {
     }
 }
 
+fn row_tuple_to_entry(
+    (id, ts_str, content, tags_json, project_id, session_id): (
+        i64,
+        String,
+        String,
+        String,
+        String,
+        String,
+    ),
+) -> Result<Entry> {
+    let timestamp = DateTime::parse_from_rfc3339(&ts_str)
+        .map(|dt| dt.with_timezone(&Utc))
+        .unwrap_or_else(|_| Utc::now());
+    let tags: Vec<String> = serde_json::from_str(&tags_json).unwrap_or_default();
+    Ok(Entry {
+        id,
+        timestamp,
+        content,
+        tags,
+        project_id,
+        session_id,
+    })
+}
+
 fn detect_project_id(dir: &Path) -> Result<String> {
     // Try to find git remote URL
     if let Ok(output) = std::process::Command::new("git")
@@ -200,8 +241,9 @@ fn db_path(project_id: &str) -> Result<PathBuf> {
 }
 
 fn dirs_base() -> Result<PathBuf> {
-    let home = std::env::var("HOME").context("HOME not set")?;
-    Ok(PathBuf::from(home).join(".local").join("share").join("memo"))
+    Ok(dirs::data_local_dir()
+        .ok_or_else(|| anyhow::anyhow!("cannot find data dir"))?
+        .join("memo"))
 }
 
 fn new_session_id() -> String {
@@ -219,7 +261,6 @@ PRAGMA journal_mode=WAL;
 CREATE TABLE IF NOT EXISTS sessions (
     id          TEXT PRIMARY KEY,
     started_at  TEXT NOT NULL,
-    ended_at    TEXT,
     project_id  TEXT NOT NULL
 );
 

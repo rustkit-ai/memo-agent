@@ -19,8 +19,14 @@ enum Command {
     /// Save a memory entry
     Log {
         message: String,
-        #[arg(long)]
-        tag: Option<String>,
+        #[arg(long, action = clap::ArgAction::Append)]
+        tag: Vec<String>,
+    },
+
+    /// Search memory entries
+    Search {
+        /// Query string to search for in entry content
+        query: String,
     },
 
     /// Print context block for injection at session start
@@ -65,12 +71,20 @@ fn main() -> Result<()> {
             let store = Store::open(&dir)?;
             println!("memo initialized for project {}", &store.project_id[..8]);
             println!("db: ~/.local/share/memo/{}.db", store.project_id);
+            println!();
+            println!("Add the following to your project's CLAUDE.md to auto-inject context:");
+            println!();
+            println!("```");
+            println!("<!-- memo:start -->");
+            println!("<!-- memo:end -->");
+            println!("```");
+            println!();
+            println!("Or run `memo inject --claude` to write it automatically.");
         }
 
         Command::Log { message, tag } => {
             let store = Store::open(&dir)?;
-            let tags: Vec<String> = tag.into_iter().collect();
-            store.save(&message, &tags)?;
+            store.save(&message, &tag)?;
             println!("logged: {}", message);
         }
 
@@ -110,6 +124,26 @@ fn main() -> Result<()> {
             }
         }
 
+        Command::Search { query } => {
+            let store = Store::open(&dir)?;
+            let entries = store.search(&query)?;
+
+            if entries.is_empty() {
+                println!("no entries found for query: {}", query);
+                return Ok(());
+            }
+
+            for entry in &entries {
+                let date = entry.timestamp.format("%Y-%m-%d %H:%M");
+                let tags = if entry.tags.is_empty() {
+                    String::new()
+                } else {
+                    format!(" [{}]", entry.tags.join(", "))
+                };
+                println!("{} — {}{}", date, entry.content, tags);
+            }
+        }
+
         Command::Clear { yes } => {
             if !yes {
                 eprint!("clear all memory for this project? [y/N] ");
@@ -129,8 +163,9 @@ fn main() -> Result<()> {
             let store = Store::open(&dir)?;
             let count = store.count()?;
             let tags = store.recent_tags(20)?;
-            // Rough token estimate: ~8 tokens per entry in inject output
-            let tokens_saved = count * 8;
+            let block = InjectBlock::build(&store)?;
+            // Rough token estimate: chars in inject block / 4
+            let tokens_saved = block.render_text().len() / 4;
             println!("project:      {}", &store.project_id[..8]);
             println!("entries:      {}", count);
             println!("tokens saved: ~{}", tokens_saved);
