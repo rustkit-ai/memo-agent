@@ -533,8 +533,9 @@ fn main() -> Result<()> {
             // 1. binary
             let path_env = std::env::var("PATH").unwrap_or_default();
             let sep = if cfg!(windows) { ';' } else { ':' };
+            let bin_name = if cfg!(windows) { "memo.exe" } else { "memo" };
             let found_memo = path_env.split(sep).find_map(|p| {
-                let c = std::path::Path::new(p).join("memo");
+                let c = std::path::Path::new(p).join(bin_name);
                 if c.exists() { Some(c) } else { None }
             });
             match &found_memo {
