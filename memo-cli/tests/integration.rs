@@ -19,15 +19,25 @@ fn temp_home(test_name: &str) -> PathBuf {
 }
 
 fn run_memo(home: &PathBuf, args: &[&str]) -> std::process::Output {
-    Command::new(memo_bin())
-        .args(args)
+    run_memo_with_bin_on_path(home, args, false)
+}
+
+fn run_memo_with_bin_on_path(home: &PathBuf, args: &[&str], bin_on_path: bool) -> std::process::Output {
+    let bin = memo_bin();
+    let mut cmd = Command::new(&bin);
+    cmd.args(args)
         .env("HOME", home)
         // Use project subdir so project_id is consistent per test
         .current_dir(home.join("project"))
         // Prevent git remote lookups from going to unrelated repos
-        .env("GIT_DIR", "/dev/null")
-        .output()
-        .expect("failed to run memo")
+        .env("GIT_DIR", "/dev/null");
+    if bin_on_path {
+        let bin_dir = bin.parent().expect("binary has parent dir");
+        let path_env = std::env::var("PATH").unwrap_or_default();
+        let new_path = format!("{}:{}", bin_dir.display(), path_env);
+        cmd.env("PATH", new_path);
+    }
+    cmd.output().expect("failed to run memo")
 }
 
 #[test]
@@ -297,7 +307,7 @@ fn test_doctor_after_setup() {
     let setup_out = run_memo(&home, &["setup"]);
     assert!(setup_out.status.success(), "setup failed: {:?}", setup_out);
 
-    let out = run_memo(&home, &["doctor"]);
+    let out = run_memo_with_bin_on_path(&home, &["doctor"], true);
     let stdout = String::from_utf8_lossy(&out.stdout);
     assert!(out.status.success(), "doctor failed: {:?}", out);
 
