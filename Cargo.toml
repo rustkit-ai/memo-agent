@@ -5,7 +5,7 @@ resolver = "2"
 [workspace.package]
 version = "0.1.7"
 edition = "2024"
-repository = "https://github.com/rustkit-ai/memo"
+repository = "https://github.com/rustkit-ai/memo-agent"
 license = "MIT"
 
 [workspace.dependencies]

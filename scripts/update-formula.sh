@@ -5,7 +5,7 @@
 set -euo pipefail
 
 VERSION="${1:?usage: $0 <version>}"
-REPO="rustkit-ai/memo"
+REPO="rustkit-ai/memo-agent"
 FORMULA="Formula/memo.rb"
 
 targets=(

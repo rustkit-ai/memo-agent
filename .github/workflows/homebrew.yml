@@ -25,7 +25,7 @@ jobs:
           VERSION=${{ steps.version.outputs.version }}
           for i in $(seq 1 12); do
             COUNT=$(curl -fsSL \
-              "https://api.github.com/repos/rustkit-ai/memo/releases/tags/v${VERSION}" \
+              "https://api.github.com/repos/rustkit-ai/memo-agent/releases/tags/v${VERSION}" \
               | jq '.assets | length')
             echo "Assets available: $COUNT"
             [ "$COUNT" -ge 4 ] && break
@@ -36,7 +36,7 @@ jobs:
       - name: Compute SHA256 and update formula
         run: |
           VERSION=${{ steps.version.outputs.version }}
-          BASE="https://github.com/rustkit-ai/memo/releases/download/v${VERSION}"
+          BASE="https://github.com/rustkit-ai/memo-agent/releases/download/v${VERSION}"
 
           for target in aarch64-apple-darwin x86_64-apple-darwin aarch64-unknown-linux-gnu x86_64-unknown-linux-gnu; do
             sha=$(curl -fsSL "${BASE}/memo-${target}.tar.gz" | sha256sum | awk '{print $1}')

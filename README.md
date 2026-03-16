@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/rustkit-ai/memo/actions/workflows/ci.yml"><img src="https://github.com/rustkit-ai/memo/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
+  <a href="https://github.com/rustkit-ai/memo-agent/actions/workflows/ci.yml"><img src="https://github.com/rustkit-ai/memo-agent/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
   <a href="https://crates.io/crates/memo-agent"><img src="https://img.shields.io/crates/v/memo-agent.svg" alt="crates.io"/></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"/></a>
 </p>
@@ -76,12 +76,12 @@ cargo install memo-agent
 
 **curl** (Linux / macOS):
 ```sh
-curl -fsSL https://github.com/rustkit-ai/memo/releases/latest/download/install.sh | sh
+curl -fsSL https://github.com/rustkit-ai/memo-agent/releases/latest/download/install.sh | sh
 ```
 
 **brew**:
 ```sh
-brew tap rustkit-ai/memo https://github.com/rustkit-ai/memo
+brew tap rustkit-ai/memo-agent https://github.com/rustkit-ai/memo-agent
 brew install memo
 ```
 
@@ -353,4 +353,4 @@ As agents become more autonomous — running longer tasks, working across multip
 
 ## License
 
-MIT — [rustkit-ai/memo](https://github.com/rustkit-ai/memo)
+MIT — [rustkit-ai/memo-agent](https://github.com/rustkit-ai/memo-agent)

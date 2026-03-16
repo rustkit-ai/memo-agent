@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -e
 
-REPO="rustkit-ai/memo"
+REPO="rustkit-ai/memo-agent"
 BIN="memo"
 
 # Detect OS
