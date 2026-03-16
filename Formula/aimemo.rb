@@ -1,7 +1,7 @@
 class Aimemo < Formula
   desc "Persistent memory for AI coding agents"
   homepage "https://github.com/rustkit-ai/aimemo"
-  version "0.1.8"
+  version "0.1.9"
   license "MIT"
 
   on_macos do

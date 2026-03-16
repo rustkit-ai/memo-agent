@@ -9,7 +9,7 @@ Cursor reads rules from `.cursor/rules/` automatically. `aimemo setup` writes a 
 Run once in your project root:
 
 ```sh
-aimemo setup
+aimemo setup --cursor
 ```
 
 Then bootstrap from your git history so the agent has context from day one:

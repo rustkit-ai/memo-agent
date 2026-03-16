@@ -130,30 +130,54 @@ pub struct SetupResult {
     pub post_tool_hook_installed: bool,
 }
 
-pub fn setup(project_dir: &Path) -> Result<SetupResult> {
-    // Claude Code
-    write_instructions_to_claude_md(project_dir)?;
-    write_to_claude_md(&InjectBlock::empty(), project_dir)?;
-    let claude_hook_installed = install_stop_hook(project_dir)?;
-    let start_hook_installed = install_start_hook(project_dir)?;
-    let post_tool_hook_installed = install_post_tool_hook(project_dir)?;
+pub struct SetupConfig {
+    pub claude: bool,
+    pub cursor: bool,
+    pub windsurf: bool,
+    pub copilot: bool,
+}
 
-    // Cursor
-    let cursor_rules_written = write_cursor_rules(project_dir)?;
-    if cursor_rules_written {
-        write_to_cursor_rules(&InjectBlock::empty(), project_dir)?;
+impl SetupConfig {
+    pub fn all() -> Self {
+        Self { claude: true, cursor: true, windsurf: true, copilot: true }
+    }
+}
+
+pub fn setup(project_dir: &Path, config: &SetupConfig) -> Result<SetupResult> {
+    let mut claude_hook_installed = false;
+    let mut start_hook_installed = false;
+    let mut post_tool_hook_installed = false;
+    let mut cursor_rules_written = false;
+    let mut windsurf_rules_written = false;
+    let mut copilot_instructions_written = false;
+
+    if config.claude {
+        write_instructions_to_claude_md(project_dir)?;
+        write_to_claude_md(&InjectBlock::empty(), project_dir)?;
+        claude_hook_installed = install_stop_hook(project_dir)?;
+        start_hook_installed = install_start_hook(project_dir)?;
+        post_tool_hook_installed = install_post_tool_hook(project_dir)?;
     }
 
-    // Windsurf
-    let windsurf_rules_written = write_windsurf_rules(project_dir)?;
-    if windsurf_rules_written {
-        write_to_windsurf_rules(&InjectBlock::empty(), project_dir)?;
+    if config.cursor {
+        cursor_rules_written = write_cursor_rules(project_dir)?;
+        if cursor_rules_written {
+            write_to_cursor_rules(&InjectBlock::empty(), project_dir)?;
+        }
     }
 
-    // GitHub Copilot
-    let copilot_instructions_written = write_copilot_instructions(project_dir)?;
-    if copilot_instructions_written {
-        write_to_copilot_instructions(&InjectBlock::empty(), project_dir)?;
+    if config.windsurf {
+        windsurf_rules_written = write_windsurf_rules(project_dir)?;
+        if windsurf_rules_written {
+            write_to_windsurf_rules(&InjectBlock::empty(), project_dir)?;
+        }
+    }
+
+    if config.copilot {
+        copilot_instructions_written = write_copilot_instructions(project_dir)?;
+        if copilot_instructions_written {
+            write_to_copilot_instructions(&InjectBlock::empty(), project_dir)?;
+        }
     }
 
     Ok(SetupResult {

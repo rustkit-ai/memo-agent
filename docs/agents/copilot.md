@@ -11,7 +11,7 @@ GitHub Copilot reads `.github/copilot-instructions.md` automatically in VS Code 
 Run once in your project root:
 
 ```sh
-aimemo setup
+aimemo setup --copilot
 ```
 
 Then bootstrap from your git history so the agent has context from day one:

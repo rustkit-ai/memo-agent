@@ -98,7 +98,9 @@ aimemo will import your recent commits so the agent has context from day one —
 Claude Code is a CLI tool with a native hook system. `aimemo setup` installs **three hooks** that automate the full memory loop with zero manual steps.
 
 ```sh
-aimemo setup
+aimemo setup           # all agents
+aimemo setup --claude  # Claude Code only
+aimemo setup --cursor  # Cursor only
 ```
 
 Three things happen:
@@ -323,7 +325,7 @@ Each developer's local DB stays private. Only what's been synced ends up in `.ai
 
 | Command | Description |
 |---|---|
-| `aimemo setup` | One-time setup for all agents |
+| `aimemo setup` | One-time setup for all agents (or pass `--claude`, `--cursor`, `--windsurf`, `--copilot` to select) |
 | `aimemo init` | Initialize project memory |
 | `aimemo doctor` | Check hooks, DB, and all agent config files |
 

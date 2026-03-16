@@ -5,7 +5,7 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};
 use colored::Colorize;
 use store::{Entry, Store, db_path_for, inject_marker_path};
-use hooks::{inject_all, setup, write_to_claude_md, write_to_copilot_instructions, write_to_cursor_rules, write_to_vscode, write_to_windsurf_rules, InjectBlock};
+use hooks::{inject_all, setup, SetupConfig, write_to_claude_md, write_to_copilot_instructions, write_to_cursor_rules, write_to_vscode, write_to_windsurf_rules, InjectBlock};
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
@@ -105,8 +105,21 @@ enum Command {
     /// Show memory statistics
     Stats,
 
-    /// Set up aimemo for Claude Code (writes CLAUDE.md + installs Stop hook)
-    Setup,
+    /// Set up aimemo for one or more agents (default: all detected)
+    Setup {
+        /// Configure Claude Code (CLAUDE.md + hooks)
+        #[arg(long)]
+        claude: bool,
+        /// Configure Cursor (.cursor/rules/aimemo.mdc)
+        #[arg(long)]
+        cursor: bool,
+        /// Configure Windsurf (.windsurfrules)
+        #[arg(long)]
+        windsurf: bool,
+        /// Configure GitHub Copilot (.github/copilot-instructions.md)
+        #[arg(long)]
+        copilot: bool,
+    },
 
     /// Edit a memory entry in $EDITOR
     Edit { id: i64 },
@@ -418,8 +431,13 @@ fn main() -> Result<()> {
             println!("cleared {} entries", store.clear()?);
         }
 
-        Command::Setup => {
-            let result = setup(&dir)?;
+        Command::Setup { claude, cursor, windsurf, copilot } => {
+            let config = if claude || cursor || windsurf || copilot {
+                SetupConfig { claude, cursor, windsurf, copilot }
+            } else {
+                SetupConfig::all()
+            };
+            let result = setup(&dir, &config)?;
             println!("✓ CLAUDE.md updated with aimemo instructions and context block");
             if result.claude_hook_installed {
                 println!("✓ Stop hook installed in .claude/settings.json");
@@ -695,6 +713,30 @@ fn main() -> Result<()> {
                     ".github/copilot-instructions.md: aimemo context block present",
                     ".github/copilot-instructions.md: no aimemo block — run `aimemo inject --copilot`"
                 );
+            }
+
+            // ── Version ───────────────────────────────────────────────────────
+            println!();
+            println!("{}", "Version".bold());
+            let current = env!("CARGO_PKG_VERSION");
+            match ureq::get("https://crates.io/api/v1/crates/aimemo")
+                .set("User-Agent", &format!("aimemo/{current}"))
+                .call()
+                .ok()
+                .and_then(|r| r.into_json::<serde_json::Value>().ok())
+                .and_then(|v| v["crate"]["newest_version"].as_str().map(str::to_owned))
+            {
+                Some(latest) if latest == current => {
+                    println!("  {ok} up to date (v{current})");
+                }
+                Some(latest) => {
+                    println!("  {warn} update available: v{current} → v{latest}");
+                    println!("       run: cargo install aimemo");
+                    issues += 1;
+                }
+                None => {
+                    println!("  {warn} could not check latest version (offline?)");
+                }
             }
 
             println!();

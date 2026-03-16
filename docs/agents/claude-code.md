@@ -9,7 +9,7 @@ Claude Code reads `CLAUDE.md` automatically at the start of every session. `aime
 Run once in your project root:
 
 ```sh
-aimemo setup
+aimemo setup --claude
 ```
 
 Then bootstrap from your git history so the agent has context from day one:

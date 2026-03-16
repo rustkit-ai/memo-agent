@@ -9,7 +9,7 @@ Windsurf reads `.windsurfrules` automatically in every session. `aimemo setup` w
 Run once in your project root:
 
 ```sh
-aimemo setup
+aimemo setup --windsurf
 ```
 
 Then bootstrap from your git history so the agent has context from day one:
