@@ -741,10 +741,14 @@ fn main() -> Result<()> {
                 Some(latest) if latest == current => {
                     println!("  {ok} up to date (v{current})");
                 }
-                Some(latest) => {
+                Some(latest) if parse_semver(&latest) > parse_semver(current) => {
                     println!("  {warn} update available: v{current} → v{latest}");
                     println!("       run: cargo install aimemo");
                     issues += 1;
+                }
+                Some(_) => {
+                    // local version is ahead of crates.io (e.g. just published, index not yet updated)
+                    println!("  {ok} up to date (v{current})");
                 }
                 None => {
                     println!("  {warn} could not check latest version (offline?)");
@@ -1080,6 +1084,15 @@ fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+/// Parse "major.minor.patch" into a comparable tuple. Returns (0,0,0) on parse failure.
+fn parse_semver(v: &str) -> (u32, u32, u32) {
+    let mut parts = v.split('.');
+    let major = parts.next().and_then(|s| s.parse().ok()).unwrap_or(0);
+    let minor = parts.next().and_then(|s| s.parse().ok()).unwrap_or(0);
+    let patch = parts.next().and_then(|s| s.parse().ok()).unwrap_or(0);
+    (major, minor, patch)
 }
 
 /// Render entries as a Markdown document grouped by date.
